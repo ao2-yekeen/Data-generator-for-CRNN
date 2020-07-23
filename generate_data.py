@@ -14,6 +14,8 @@ args=parser.parse_args()
 
 file_counter=0
 global gray_back
+kernel=np.ones((3,3),np.uint8)
+kernel2=np.ones((1,1),np.uint8)
 
 #Character sets to choose from.
 smallletters=string.ascii_lowercase
@@ -51,6 +53,20 @@ def random_brightness(img):
     img=brightness.augment_image(img)
     return img
 
+def dilation(img):
+    img=np.array(img)
+    img=cv2.dilate(img,kernel2,iterations=1)
+    return img
+
+def erosion(img):
+    img=np.array(img)
+    img=cv2.erode(img,kernel,iterations=1)
+    return img
+
+def blur(img):
+    img=np.array(img)
+    img=cv2.blur(img,ksize=(3,3))
+
 
 
 def fuse_gray(img):
@@ -68,6 +84,11 @@ def random_transformation(img):
         img=fuse_gray(img)
     elif np.random.rand()<0.5:
         img=random_brightness(img)
+    elif np.random.rand()<0.5:
+        img=dilation(img)
+    elif np.random.rand()<0.5:
+        img=erosion(img)
+
     else:
         img=np.array(img)
     return Image.fromarray(img)
