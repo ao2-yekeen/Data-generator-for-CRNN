@@ -4,7 +4,8 @@ from PIL import Image,ImageFont,ImageDraw
 import argparse
 import random
 import os
-
+import imgaug.augmenters as iaa
+import cv2
 
 parser=argparse.ArgumentParser()
 parser.add_argument('--n_samples',type=int)
@@ -12,6 +13,7 @@ parser.add_argument('--word_type',default='lowercase')
 args=parser.parse_args()
 
 file_counter=0
+global gray_back
 
 #Character sets to choose from.
 smallletters=string.ascii_lowercase
@@ -23,6 +25,7 @@ digits=string.digits
 
 #Base backgound.
 back=Image.open('background.jpg')
+
 
 #Different fonts to be used.
 fonts_list=os.listdir('./fonts/')
@@ -38,7 +41,39 @@ font_size=[]
 for l in range(10,30):
     font_size.append(l)
 
+
 file_counter=0
+
+
+def random_brightness(img):
+    img=np.array(img)
+    brightness=iaa.Multiply((0.2,1.2))
+    img=brightness.augment_image(img)
+    return img
+
+
+
+def fuse_gray(img):
+    img=np.array(img)
+    ht,wt=img.shape[0],img.shape[1]
+    gray_back=cv2.imread('gray_back.jpg',0)
+    gray_back=cv2.resize(gray_back,(wt,ht))
+    blended=cv2.addWeighted(src1=img,alpha=0.8,src2=gray_back,beta=0.4,gamma=10)
+    return blended
+
+
+
+def random_transformation(img):
+    if np.random.rand()<0.5:
+        img=fuse_gray(img)
+    elif np.random.rand()<0.5:
+        img=random_brightness(img)
+    else:
+        img=np.array(img)
+    return Image.fromarray(img)
+
+
+
 
 
 for _ in range(args.n_samples):
@@ -60,6 +95,7 @@ for _ in range(args.n_samples):
     back_c=back_c.resize((w+5,h+5))
     draw=ImageDraw.Draw(back_c)
     draw.text((0,0),text=word,font=font,fill='rgb(0,0,0)')
+    back_c=random_transformation(back_c)
     back_c.save(f'./images/{file_counter}_{word}.jpg')
     file_counter+=1
 
