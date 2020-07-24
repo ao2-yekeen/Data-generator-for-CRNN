@@ -14,7 +14,7 @@ args=parser.parse_args()
 
 file_counter=0
 global gray_back
-kernel=np.ones((3,3),np.uint8)
+kernel=np.ones((2,2),np.uint8)
 kernel2=np.ones((1,1),np.uint8)
 
 #Character sets to choose from.
