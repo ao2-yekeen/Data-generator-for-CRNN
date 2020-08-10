@@ -12,10 +12,10 @@ parser.add_argument('--n_samples',type=int)
 parser.add_argument('--word_type',default='lowercase')
 args=parser.parse_args()
 
-file_counter=0
 global gray_back
 kernel=np.ones((2,2),np.uint8)
 kernel2=np.ones((1,1),np.uint8)
+punclist=',.?:;'
 
 #Character sets to choose from.
 smallletters=string.ascii_lowercase
@@ -26,7 +26,12 @@ digits=string.digits
 
 
 #Base backgound.
-back=Image.open('background.jpg')
+backfilelist=os.listdir('./background/')
+backgroud_list=[]
+
+for bn in backfilelist:
+    fileloc='./background/'+bn
+    backgroud_list.append(Image.fromarray(cv2.imread(fileloc,0)))
 
 
 #Different fonts to be used.
@@ -35,7 +40,7 @@ fonts_list=['./fonts/'+f for f in fonts_list]
 
 #Lengths of the words.
 word_lengths=[]
-for l in range(2,21):
+for l in range(1,21):
     word_lengths.append(l)
 
 #Font size.
@@ -74,6 +79,7 @@ def fuse_gray(img):
     ht,wt=img.shape[0],img.shape[1]
     gray_back=cv2.imread('gray_back.jpg',0)
     gray_back=cv2.resize(gray_back,(wt,ht))
+
     blended=cv2.addWeighted(src1=img,alpha=0.8,src2=gray_back,beta=0.4,gamma=10)
     return blended
 
@@ -94,12 +100,15 @@ def random_transformation(img):
     return Image.fromarray(img)
 
 
+file=open('annotation.txt','a+')
 
-
+file_counter=0
 
 for _ in range(args.n_samples):
-    back_c=back.copy()
+
+    back_c=random.choice(backgroud_list).copy()
     start_cap=random.choice(capitalletters)
+    filename=''.join([random.choice(smallletters) for c in range(random.choice([5,6,7,8,9,10,11]))])
     font=ImageFont.truetype(random.choice(fonts_list),size=random.choice(font_size))
     if args.word_type=='lowercase':
         word=''.join([random.choice(smallletters) for b in range(random.choice(word_lengths))])
@@ -110,6 +119,9 @@ for _ in range(args.n_samples):
         word=start_cap+word
     elif args.word_type=='digits':
         word=''.join([random.choice(digits) for b in range(random.choice(word_lengths))])
+    elif args.word_type=='punctuation':
+        word=''.join([random.choice(smallletters) for b in range(random.choice(word_lengths))])
+        word=word+str(random.choice(punclist))
     else:
         raise Exception("Invalid word choice.")
     w,h=font.getsize(word)[0],font.getsize(word)[1]
@@ -117,8 +129,14 @@ for _ in range(args.n_samples):
     draw=ImageDraw.Draw(back_c)
     draw.text((0,0),text=word,font=font,fill='rgb(0,0,0)')
     back_c=random_transformation(back_c)
-    back_c.save(f'./images/{file_counter}_{word}.jpg')
+    back_c.save(f'./images/{file_counter}_{filename}.jpg')
+    file.writelines(str(file_counter)+'_'+filename+'.jpg'+','+word+'\n')
     file_counter+=1
 
 
 
+
+
+
+
+    
